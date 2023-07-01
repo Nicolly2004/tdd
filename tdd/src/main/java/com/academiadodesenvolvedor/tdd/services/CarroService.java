@@ -1,9 +1,12 @@
 package com.academiadodesenvolvedor.tdd.services;
 
+import com.academiadodesenvolvedor.tdd.exceptions.NotFoundException;
 import com.academiadodesenvolvedor.tdd.models.Carro;
 import com.academiadodesenvolvedor.tdd.repositories.CarroRepository;
 import com.academiadodesenvolvedor.tdd.services.contratos.CarroServiceContrato;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,13 +33,18 @@ public class CarroService implements CarroServiceContrato {
     }
 
     @Override
+    public Page<Carro> listarCarros(Pageable page){
+        return carroRepository.findAll(page);
+    }
+
+    @Override
     public Carro buscaPorId(long id){
         Optional<Carro> carro = carroRepository.findById(id);
 
-        if (carro.isPresent()){
-            return carro.get();
+        if (carro.isEmpty()){
+            throw new NotFoundException("Não foi possível encontrar o carro com o ID: '"+id+"'");
         }
-        return null;
+        return carro.get();
     }
 
     @Override

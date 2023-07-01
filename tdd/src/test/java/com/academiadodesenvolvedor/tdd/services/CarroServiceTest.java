@@ -1,6 +1,7 @@
 package com.academiadodesenvolvedor.tdd.services;
 
 
+import com.academiadodesenvolvedor.tdd.exceptions.NotFoundException;
 import com.academiadodesenvolvedor.tdd.models.Carro;
 import com.academiadodesenvolvedor.tdd.repositories.CarroRepository;
 import com.academiadodesenvolvedor.tdd.services.contratos.CarroServiceContrato;
@@ -14,6 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -95,10 +100,45 @@ public class CarroServiceTest {
     @Test
     @DisplayName("Testa se a service está apagando corretamente")
     public void apagaCarroTest(){
+        Carro carroSaved = this.criaCarro();
+        carroSaved.setId(1L);
+        Mockito.when(this.repository.findById(1L))
+                .thenReturn(Optional.of(carroSaved));
+
         carroService.apagarCarro(1L);
-        Carro carro = carroService.buscaPorId(1L);
-        Assertions.assertNull(carro);
+
+        Mockito.when(this.repository.findById(1L)).thenReturn(
+                Optional.empty() );
+        Assertions.assertThrows(NotFoundException.class,() ->{
+            carroService.buscaPorId(1L);
+
+        });
     }
+
+
+
+    @Test
+    @DisplayName("Testa se a sobrecarga do Listar Carro está funcionando corretamente")
+    public void ListarCarroPaginadoTest(){
+        Pageable page = PageRequest.of(0,15);
+        Mockito.when(this.repository.findAll(page)).thenReturn(new PageImpl<>(Arrays.asList(this.criaCarro())));
+
+        Page<Carro> carroPage = carroService.listarCarros(page);
+
+        Assertions.assertTrue(carroPage.hasContent());
+    }
+
+    @Test
+    @DisplayName("Testa se a busca por Id lança Exceção")
+    public void deveLancarExcecao(){
+
+        Assertions.assertThrows(NotFoundException.class, () ->{
+            this.carroService.buscaPorId(0L);
+
+        });
+
+    }
+
 
 
      @BeforeEach
